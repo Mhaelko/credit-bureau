@@ -1,0 +1,53 @@
+.history-wrapper {
+    padding: 20px;
+  }
+  
+  .history-title {
+    margin-bottom: 20px;
+  }
+  
+  .history-table {
+    width: 100%;
+    max-width: 750px;
+    border-collapse: collapse;
+    font-size: 16px;
+  }
+  
+  .history-table th {
+    text-align: left;
+    padding: 10px;
+    background: #f2f4f7;
+    border-bottom: 2px solid #ccc;
+  }
+  
+  .history-table td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .history-link {
+    color: #2a66d4;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  
+  .history-link:hover {
+    text-decoration: underline;
+  }
+  
+  .empty-row {
+    text-align: center;
+    padding: 20px;
+    color: #777;
+    font-style: italic;
+  }
+  
+  /* Мобільний режим */
+  @media (max-width: 650px) {
+    .history-table th,
+    .history-table td {
+      font-size: 14px;
+      padding: 6px;
+    }
+  }
+  

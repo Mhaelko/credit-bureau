@@ -1,0 +1,61 @@
+.profile-wrapper {
+    padding: 20px;
+  }
+  
+  .profile-title {
+    margin-bottom: 20px;
+  }
+  
+  .profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 12px;
+    max-width: 650px;
+    align-items: center;
+  }
+  
+  .disabled-input {
+    background: #eee;
+  }
+  
+  /* Контейнер кнопки */
+  .save-btn-wrapper {
+    max-width: 650px;
+    margin-top: 20px;
+    text-align: right;
+  }
+  
+  /* Кнопка */
+  .save-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 15px;
+    transition: 0.2s;
+  }
+  
+  /* Активна */
+  .save-btn.active {
+    background: #4A90E2;
+    cursor: pointer;
+  }
+  
+  /* Неактивна */
+  .save-btn.inactive {
+    background: #a8c4e6;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+  
+  /* 📱 Адаптивність для мобілок */
+  @media (max-width: 600px) {
+    .profile-grid {
+      grid-template-columns: 1fr;
+    }
+  
+    .save-btn-wrapper {
+      text-align: center; /* на мобілці по центру */
+    }
+  }
+  

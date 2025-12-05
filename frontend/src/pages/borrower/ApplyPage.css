@@ -1,0 +1,49 @@
+.apply-wrapper {
+    padding: 20px;
+  }
+  
+  .apply-title {
+    margin-bottom: 20px;
+  }
+  
+  .apply-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 12px;
+    max-width: 650px;
+    align-items: center;
+  }
+  
+  /* Контейнер кнопки */
+  .apply-btn-wrapper {
+    max-width: 650px;
+    margin-top: 20px;
+    text-align: right;
+  }
+  
+  /* Кнопка */
+  .apply-btn {
+    padding: 10px 20px;
+    background: #4A90E2;
+    color: white;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  
+  .apply-btn:hover {
+    background: #3a78c6;
+  }
+  
+  /* 📱 Мобільний режим */
+  @media (max-width: 600px) {
+    .apply-grid {
+      grid-template-columns: 1fr;
+    }
+  
+    .apply-btn-wrapper {
+      text-align: center;
+    }
+  }
+  

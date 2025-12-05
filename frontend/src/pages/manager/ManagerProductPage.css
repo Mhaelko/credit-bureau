@@ -1,0 +1,97 @@
+/* === ОБГОРТКА СТОРІНКИ === */
+.product-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 30px;
+  }
+  
+  .page-title {
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 25px;
+  }
+  
+  /* === БІЛА КАРТКА === */
+  .product-card {
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  
+  /* === ГРУПИ ПОЛІВ === */
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .form-group label {
+    font-weight: 600;
+  }
+  
+  /* === ІНПУТИ === */
+  .form-input,
+  .form-textarea {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+    box-sizing: border-box;
+  }
+  
+  .form-textarea {
+    min-height: 130px;
+    resize: vertical;
+  }
+  
+  /* ==== Дві колонки ==== */
+  .row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  
+  /* ==== КНОПКИ ==== */
+  .btn-block {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 20px;
+  }
+  
+  .btn.success {
+    background: #34a853;
+    color: #fff;
+    padding: 12px 32px;
+    font-size: 18px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    min-width: 160px;
+  }
+  
+  .btn.success:hover {
+    background: #2d8b46;
+  }
+  
+  .btn-back {
+    background: #3079e0;
+    color: #fff;
+    padding: 12px 32px;
+    font-size: 18px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    min-width: 160px;
+  }
+  
+  .btn-back:hover {
+    background: #2362bb;
+  }
+  
