@@ -1,49 +1,68 @@
+/* ========== APPLY PAGE LAYOUT ========== */
+
 .apply-wrapper {
-    padding: 20px;
-  }
-  
-  .apply-title {
-    margin-bottom: 20px;
-  }
-  
+  max-width: 650px;
+  margin-left: 0;        /* Було auto */
+  margin-right: 0;
+  padding: 20px;
+}
+
+.apply-title {
+  margin-bottom: 20px;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.apply-subtitle {
+  margin-bottom: 15px;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+/* ========== ФОРМА ПОДАЧІ ЗАЯВКИ ========== */
+
+.apply-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 12px;
+  max-width: 650px;      /* Точно така ж ширина */
+  align-items: center;
+}
+
+.apply-grid label {
+  font-weight: 600;
+  color: #333;
+}
+
+/* ========== КНОПКА ========== */
+
+.apply-btn-wrapper {
+  max-width: 650px;
+  margin-top: 20px;
+  text-align: right;
+}
+
+.apply-btn {
+  padding: 10px 20px;
+  background: #4A90E2;
+  color: white;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.apply-btn:hover {
+  background: #3a78c6;
+}
+
+/* 📱 Мобільний режим */
+@media (max-width: 600px) {
   .apply-grid {
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    gap: 12px;
-    max-width: 650px;
-    align-items: center;
-  }
-  
-  /* Контейнер кнопки */
-  .apply-btn-wrapper {
-    max-width: 650px;
-    margin-top: 20px;
-    text-align: right;
-  }
-  
-  /* Кнопка */
-  .apply-btn {
-    padding: 10px 20px;
-    background: #4A90E2;
-    color: white;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    transition: 0.2s;
-  }
-  
-  .apply-btn:hover {
-    background: #3a78c6;
-  }
-  
-  /* 📱 Мобільний режим */
-  @media (max-width: 600px) {
-    .apply-grid {
       grid-template-columns: 1fr;
-    }
-  
-    .apply-btn-wrapper {
-      text-align: center;
-    }
   }
-  
+
+  .apply-btn-wrapper {
+      text-align: center;
+  }
+}

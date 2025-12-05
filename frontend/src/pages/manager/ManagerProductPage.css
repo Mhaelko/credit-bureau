@@ -1,41 +1,59 @@
-/* === ОБГОРТКА СТОРІНКИ === */
-.product-wrapper {
-    max-width: 900px;
-    margin: 0 auto;
+/* =========================================================
+   ОБГОРТКА СТОРІНКИ МЕНЕДЖЕРА
+   ========================================================= */
+
+   .product-wrapper {
+    max-width: 900px;      /* можна збільшити, але картка буде 650px */
+    margin-left: 0;        /* вирівнювання ліворуч */
+    margin-right: 0;
     padding: 30px;
-  }
-  
-  .page-title {
+}
+
+/* Заголовок */
+.page-title,
+.product-wrapper h1 {
     font-size: 36px;
     font-weight: 700;
     margin-bottom: 25px;
-  }
-  
-  /* === БІЛА КАРТКА === */
-  .product-card {
+    text-align: left;
+}
+
+/* =========================================================
+   БІЛА КАРТКА ПРОДУКТУ
+   ========================================================= */
+
+.product-card {
     background: #ffffff;
     padding: 40px;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
-  }
-  
-  /* === ГРУПИ ПОЛІВ === */
-  .form-group {
+
+    max-width: 650px;     /* повністю вирівняно з ApplyPage */
+    width: 100%;
+    box-sizing: border-box;
+
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* =========================================================
+   ГРУПИ ПОЛІВ
+   ========================================================= */
+
+.form-group {
     display: flex;
     flex-direction: column;
     gap: 8px;
-  }
-  
-  .form-group label {
+}
+
+.form-group label {
     font-weight: 600;
-  }
-  
-  /* === ІНПУТИ === */
-  .form-input,
-  .form-textarea {
+    color: #333;
+}
+
+/* Інпут */
+.form-input,
+.form-textarea {
     width: 100%;
     padding: 12px 14px;
     font-size: 16px;
@@ -43,29 +61,33 @@
     border-radius: 8px;
     background: #fff;
     box-sizing: border-box;
-  }
-  
-  .form-textarea {
+}
+
+.form-textarea {
     min-height: 130px;
     resize: vertical;
-  }
-  
-  /* ==== Дві колонки ==== */
-  .row-2 {
+}
+
+/* Дві колонки */
+.row-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 24px;
-  }
-  
-  /* ==== КНОПКИ ==== */
-  .btn-block {
+}
+
+/* =========================================================
+   КНОПКИ
+   ========================================================= */
+
+.btn-block {
     display: flex;
-    justify-content: center;
-    gap: 30px;
+    justify-content: flex-start;   /* ← обидві кнопки зліва */
+    gap: 20px;
     margin-top: 20px;
-  }
-  
-  .btn.success {
+}
+
+/* Зелена кнопка */
+.btn.success {
     background: #34a853;
     color: #fff;
     padding: 12px 32px;
@@ -74,13 +96,14 @@
     border: none;
     cursor: pointer;
     min-width: 160px;
-  }
-  
-  .btn.success:hover {
+}
+
+.btn.success:hover {
     background: #2d8b46;
-  }
-  
-  .btn-back {
+}
+
+/* Кнопка Назад */
+.btn-back {
     background: #3079e0;
     color: #fff;
     padding: 12px 32px;
@@ -89,9 +112,8 @@
     border: none;
     cursor: pointer;
     min-width: 160px;
-  }
-  
-  .btn-back:hover {
+}
+
+.btn-back:hover {
     background: #2362bb;
-  }
-  
+}

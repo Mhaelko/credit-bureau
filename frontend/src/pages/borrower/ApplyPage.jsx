@@ -1,11 +1,22 @@
-import { useState } from "react";
-import { createApplication } from "../../api/backend";
+import { useState, useEffect } from "react";
+import { createApplication, getCreditProduct } from "../../api/backend";
+import CreditProductCard from "../../components/CreditProductCard";
 import "./ApplyPage.css";
 
 export default function ApplyPage({ customerId }) {
+  const [product, setProduct] = useState(null);
   const [amount, setAmount] = useState("");
   const [term, setTerm] = useState("");
   const [purpose, setPurpose] = useState("");
+
+  useEffect(() => {
+    loadProduct();
+  }, []);
+
+  async function loadProduct() {
+    const res = await getCreditProduct();
+    setProduct(res);
+  }
 
   const submit = async () => {
     if (!amount || !term || !purpose) {
@@ -14,12 +25,11 @@ export default function ApplyPage({ customerId }) {
     }
 
     await createApplication({
-        customer_id: customerId,
-        amount_requested: Number(amount),
-        term_months: Number(term),
-        purpose
+      customer_id: customerId,
+      amount_requested: Number(amount),
+      term_months: Number(term),
+      purpose,
     });
-      
 
     alert("Заявку створено!");
     setAmount("");
@@ -32,6 +42,16 @@ export default function ApplyPage({ customerId }) {
 
       <h2 className="apply-title">Подати заявку</h2>
 
+      {/* ============ CREDIT PRODUCT (READ ONLY) ============ */}
+      <div style={{ marginBottom: "20px" }}>
+        <h3 className="apply-subtitle">Кредитний продукт</h3>
+        <CreditProductCard
+          product={product}
+          readOnly={true}
+        />
+      </div>
+
+      {/* ============ APPLICATION FORM ============ */}
       <div className="apply-grid">
 
         <label>Сума</label>
@@ -61,6 +81,7 @@ export default function ApplyPage({ customerId }) {
           Створити
         </button>
       </div>
+
     </div>
   );
 }
