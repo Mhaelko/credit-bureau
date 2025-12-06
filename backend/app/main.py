@@ -6,6 +6,8 @@ from app.routers.customer_routes import router as customer_router
 from app.routers.manager_routes import router as manager_router
 from app.routers.auth_routes import router as auth_router
 from app.routers.product_routes import router as product_router
+from app.routers import payment_routes
+
 
 
 app = FastAPI(title="Credit Bureau API")
@@ -26,7 +28,8 @@ app.include_router(manager_router, prefix="/manager", tags=["Manager"])
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(dictionaries_router, prefix="/dictionaries", tags=["Dictionaries"])
 app.include_router(product_router,prefix="/product", tags=["product"])
-
+app.include_router(payment_routes.router)
+app.include_router(payment_routes.router, prefix="/payment")
 @app.get("/")
 def root():
     return {"status": "API is running"}

@@ -1,6 +1,12 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getApplicationFullDetails, createManagerDecision } from "../api/backend";
+import {
+  getApplicationFullDetails,
+  createManagerDecision,
+  getPaymentSchedule,
+  payScheduleItem,
+} from "../api/backend";
+
 import "./ApplicationDetailsPage.css";
 
 export default function ApplicationDetailsPage() {
@@ -12,9 +18,11 @@ export default function ApplicationDetailsPage() {
   const isManager = localStorage.getItem("login") === "manager";
 
   const [data, setData] = useState(null);
+  const [schedule, setSchedule] = useState([]);
 
   useEffect(() => {
     load();
+    loadSchedule();
   }, []);
 
   async function load() {
@@ -22,21 +30,37 @@ export default function ApplicationDetailsPage() {
     setData(res);
   }
 
+  async function loadSchedule() {
+    const res = await getPaymentSchedule(id);
+    if (res?.schedule) {
+      setSchedule(res.schedule);
+    }
+  }
+
+  async function handlePay(paymentId) {
+    try {
+      await payScheduleItem(paymentId);
+      await loadSchedule(); // refresh list
+    } catch (err) {
+      alert("Помилка оплати");
+    }
+  }
+
   if (!data) return <p>Завантаження…</p>;
 
   const app = data.application;
   const borrower = data.borrower;
-  const otherApps = data.other_applications || [];   // ДОДАНО
-  const BKIreports = data.bki_reports || [];   
+  const otherApps = data.other_applications || [];
+  const BKIreports = data.bki_reports || [];
+
   return (
     <div className="details-wrapper">
-
       <h1 className="page-title">Заявка #{id}</h1>
 
-      {/* ==== ДВІ ВЕЛИКІ КАРТКИ ==== */}
+      {/* ================== ОСНОВНІ ДАНІ ================== */}
       <div className="details-grid">
-
-        {/* --- Дані заявки --- */}
+        
+        {/* --- Дані по заявці --- */}
         <div className="card">
           <h2>Дані по заявці</h2>
 
@@ -64,10 +88,9 @@ export default function ApplicationDetailsPage() {
           <div className="row"><span>Тип зайнятості:</span><strong>{borrower.employment_type_name}</strong></div>
           <div className="row"><span>Стаж:</span><strong>{borrower.employment_term_months} міс.</strong></div>
         </div>
-
       </div>
 
-      {/* ==== ТІЛЬКИ ДЛЯ МЕНЕДЖЕРА ==== */}
+      {/* ================== ТІЛЬКИ ДЛЯ МЕНЕДЖЕРА ================== */}
       {isManager && (
         <div className="details-grid">
 
@@ -94,10 +117,11 @@ export default function ApplicationDetailsPage() {
           </div>
         </div>
       )}
-        {/* === БКІ === */}
-        {isManager && (
-          <div className="other-apps-wrapper">
-            <h2>Бюро кредитних історій</h2>
+
+      {/* ================== БКІ ================== */}
+      {isManager && (
+        <div className="other-apps-wrapper">
+          <h2>Бюро кредитних історій</h2>
 
           <table className="history-table">
             <thead>
@@ -106,8 +130,8 @@ export default function ApplicationDetailsPage() {
                 <th>Дата звіту</th>
                 <th>Всього кредитів</th>
                 <th>Прострочених кредитів</th>
-                <th>Максимальний термін прострочки</th>
-                <th>БКІ Скорінг</th>
+                <th>Макс. прострочка</th>
+                <th>БКІ скоринг</th>
               </tr>
             </thead>
 
@@ -127,7 +151,47 @@ export default function ApplicationDetailsPage() {
         </div>
       )}
 
-      {/* === ІНШІ ЗАЯВКИ КЛІЄНТА === */}
+      {/* ================== ГРАФІК ПЛАТЕЖІВ ================== */}
+      {schedule.length > 0 && (
+        <div className="other-apps-wrapper">
+          <h2>Графік платежів</h2>
+
+          <table className="history-table">
+            <thead>
+              <tr>
+                <th>Дата</th>
+                <th>Сума</th>
+                <th>Статус</th>
+                {!isManager && <th>Сплатити</th>}
+              </tr>
+            </thead>
+
+            <tbody>
+              {schedule.map((p) => (
+                <tr key={p.payment_id}>
+                  <td>{new Date(p.payment_date).toLocaleDateString("uk-UA")}</td>
+                  <td>{p.payment_amount} грн</td>
+                  <td>{p.is_paid ? "Оплачено" : "Очікується"}</td>
+
+                  {!isManager && (
+                    <td>
+                      {!p.is_paid ? (
+                        <button className="pay-btn" onClick={() => handlePay(p.payment_id)}>
+                          Сплатити
+                        </button>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ================== ІНШІ ЗАЯВКИ КЛІЄНТА ================== */}
       {isManager && otherApps.length > 0 && (
         <div className="other-apps-wrapper">
           <h2>Інші заявки цього клієнта</h2>
@@ -137,7 +201,7 @@ export default function ApplicationDetailsPage() {
               <tr>
                 <th>ID</th>
                 <th>Статус</th>
-                <th>Скоринговий бал</th>
+                <th>Скоринг</th>
                 <th>Сума</th>
                 <th>Дата</th>
               </tr>
@@ -146,13 +210,11 @@ export default function ApplicationDetailsPage() {
             <tbody>
               {otherApps.map((a) => (
                 <tr key={a.application_id}>
-                  <td>
-                    <span
-                      className="link"
-                      onClick={() => navigate(`/manager/application/${a.application_id}`)}
-                    >
-                      {a.application_id}
-                    </span>
+                  <td
+                    className="link"
+                    onClick={() => navigate(`/manager/application/${a.application_id}`)}
+                  >
+                    {a.application_id}
                   </td>
                   <td>{a.status_name}</td>
                   <td>{a.scoring_score}</td>
@@ -165,9 +227,8 @@ export default function ApplicationDetailsPage() {
         </div>
       )}
 
-      {/* ==== КНОПКИ ==== */}
+      {/* ================== КНОПКИ ================== */}
       <div className="btn-block">
-
         {isManager && fromPending && (
           <>
             <button
@@ -179,7 +240,7 @@ export default function ApplicationDetailsPage() {
                   comment: "",
                   corrected_amount: null,
                   corrected_term: null,
-                }).then(() => navigate(-1))
+                }).then(() => navigate("/manager/applications/3"))
               }
             >
               Схвалити
@@ -194,7 +255,7 @@ export default function ApplicationDetailsPage() {
                   comment: "",
                   corrected_amount: null,
                   corrected_term: null,
-                }).then(() => navigate(-1))
+                }).then(() => navigate("/manager/applications/3"))
               }
             >
               Відхилити
@@ -205,7 +266,6 @@ export default function ApplicationDetailsPage() {
         <button className="btn primary" onClick={() => navigate(-1)}>
           Назад
         </button>
-
       </div>
     </div>
   );

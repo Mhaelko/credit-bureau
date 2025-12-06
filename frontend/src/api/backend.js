@@ -109,4 +109,23 @@ export async function getCreditProduct() {
     });
     return res.json();
   }
+  // ---- Payment Schedule----
+  export async function getPaymentSchedule(applicationId) {
+    const res = await fetch(`${API_URL}/application/${applicationId}/payments`);
+    return res.json();
+  }
+// ---- Pay Single Schedule Item ----
+export async function payScheduleItem(paymentId) {
+  const res = await fetch(`${API_URL}/payment/pay/${paymentId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" }
+  });
+
+  if (!res.ok) {
+    throw new Error("Payment failed");
+  }
+
+  return res.json();
+}
+
   
