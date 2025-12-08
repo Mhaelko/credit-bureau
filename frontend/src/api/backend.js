@@ -111,7 +111,7 @@ export async function getCreditProduct() {
   }
   // ---- Payment Schedule----
   export async function getPaymentSchedule(applicationId) {
-    const res = await fetch(`${API_URL}/application/${applicationId}/payments`);
+    const res = await fetch(`${API_URL}/payment/application/${applicationId}/payments`);
     return res.json();
   }
 // ---- Pay Single Schedule Item ----

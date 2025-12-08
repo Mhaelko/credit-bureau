@@ -18,11 +18,11 @@ def create_application(data):
 
     # Дані по клієнту
     cur.execute("""
-        SELECT monthly_income, employment_term_months 
+        SELECT monthly_income, employment_term_months, employment_type_id
         FROM customer 
         WHERE customer_id=%s;
     """, (data.customer_id,))
-    income, employment_term = cur.fetchone()
+    income, employment_term,employment_type = cur.fetchone()
 
     # Дані БКІ по клієнту
     cur.execute("""
@@ -36,17 +36,18 @@ def create_application(data):
         total_loans, overdue_loans, max_overdue_days, external_score = row
 
     # Бізнес правила
-    income_ok, dti_ok, emp_ok, overall = check_rules(
+    income_ok, dti_ok, emp_ok, emp_type_ok, overall = check_rules(
         income,
         data.amount_requested,
         data.term_months,
-        employment_term
+        employment_term,
+        employment_type
     )
     cur.execute("""
         INSERT INTO business_rules_check
-            (application_id, income_ok, dti_ok, employment_ok, overall_result)
-        VALUES (%s, %s, %s, %s, %s);
-    """, (application_id, income_ok, dti_ok, emp_ok, overall))
+            (application_id, income_ok, dti_ok, employment_ok, employment_type_ok, overall_result)
+        VALUES (%s, %s, %s, %s, %s, %s);
+    """, (application_id, income_ok, dti_ok, emp_ok, emp_type_ok, overall))
 
     # Скоринг
     scoring, risk_level = calculate_scoring(income, overdue_loans, max_overdue_days)
@@ -144,7 +145,7 @@ def get_application_full_details(application_id: int):
 
     # --- Business rules ---
     cur.execute("""
-        SELECT income_ok, dti_ok, employment_ok, overall_result
+        SELECT income_ok, dti_ok, employment_ok, employment_type_ok, overall_result
         FROM business_rules_check
         WHERE application_id = %s
     """, (application_id,))
@@ -155,13 +156,15 @@ def get_application_full_details(application_id: int):
             "income_ok": br[0],
             "dti_ok": br[1],
             "employment_ok": br[2],
-            "overall_result": br[3]
+            "employment_type_ok": br[3],
+            "overall_result": br[4]
         }
     else:
         business_rules = {
             "income_ok": None,
             "dti_ok": None,
             "employment_ok": None,
+            "employment_type_ok": None,
             "overall_result": None
         }
 

@@ -100,7 +100,8 @@ export default function ApplicationDetailsPage() {
 
             <div className="row"><span>Дохід:</span><strong>{data.business_rules.income_ok ? "Так" : "Ні"}</strong></div>
             <div className="row"><span>DTI:</span><strong>{data.business_rules.dti_ok ? "Так" : "Ні"}</strong></div>
-            <div className="row"><span>Зайнятість:</span><strong>{data.business_rules.employment_ok ? "Так" : "Ні"}</strong></div>
+            <div className="row"><span>Зайнятість:</span><strong>{data.business_rules.employment_type_ok ? "Так" : "Ні"}</strong></div>
+            <div className="row"><span>Термін зайнятості:</span><strong>{data.business_rules.employment_ok ? "Так" : "Ні"}</strong></div>
             <div className="row">
               <span>Загальний результат:</span>
               <strong>{data.business_rules.overall_result ? "PASS" : "FAILED"}</strong>
