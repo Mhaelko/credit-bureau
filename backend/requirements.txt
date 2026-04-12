@@ -5,3 +5,5 @@ python-dotenv
 pydantic
 python-dateutil
 bcrypt
+google-auth
+requests

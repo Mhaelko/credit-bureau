@@ -1,43 +1,54 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { loginUser } from "../api/backend";
+import { GoogleLogin } from "@react-oauth/google";
+import { loginUser, loginWithGoogle } from "../api/backend";
 import "./Login.css";
 
 export default function Login({ setLogin }) {
   const [login, setLoginInput] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [error, setError]       = useState("");
+  const [loading, setLoading]   = useState(false);
 
+  // Спільна логіка після отримання даних з будь-якого методу входу
+  const handleAuthResult = (data) => {
+    localStorage.setItem("login", data.login);
+    if (data.login === "admin" || data.login === "manager") {
+      setLogin(data.login);
+      return;
+    }
+    if (data.customer_id) {
+      localStorage.setItem("customer_id", data.customer_id);
+      setLogin(data.login);
+      return;
+    }
+    setError("Помилка: немає customer_id");
+  };
+
+  // Вхід логін + пароль
   const submit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-
     try {
       const data = await loginUser(login.trim().toLowerCase(), password);
-
-      localStorage.setItem("login", data.login);
-
-      if (data.login === "admin") {
-        setLogin("admin");
-        return;
-      }
-
-      if (data.login === "manager") {
-        setLogin("manager");
-        return;
-      }
-
-      if (data.customer_id) {
-        localStorage.setItem("customer_id", data.customer_id);
-        setLogin(data.login);
-        return;
-      }
-
-      setError("Помилка: немає customer_id");
+      handleAuthResult(data);
     } catch (err) {
       setError(err.message || "Помилка входу");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Вхід через Google
+  const handleGoogleSuccess = async ({ credential }) => {
+    setError("");
+    setLoading(true);
+    try {
+      const data = await loginWithGoogle(credential);
+      handleAuthResult(data);
+    } catch (err) {
+      setError(err.message || "Помилка Google входу");
     } finally {
       setLoading(false);
     }
@@ -51,6 +62,23 @@ export default function Login({ setLogin }) {
           <span className="login-brand-name">КредитБюро</span>
         </div>
         <h2>Вхід до системи</h2>
+
+        {/* Google Sign-In — тільки для клієнтів */}
+        <div className="google-btn-wrapper">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError("Помилка Google Sign-In")}
+            width="100%"
+            text="signin_with"
+            shape="rectangular"
+            theme="outline"
+            locale="uk"
+          />
+        </div>
+
+        <div className="login-divider">
+          <span>або через логін і пароль</span>
+        </div>
 
         <form onSubmit={submit} className="login-form">
           <label>Логін</label>

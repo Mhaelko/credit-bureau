@@ -42,7 +42,7 @@ function App() {
     return (
       <Router>
         <Routes>
-          <Route path="/register" element={<Register />} />
+          <Route path="/register" element={<Register setLogin={setLogin} />} />
           <Route path="*"         element={<Login setLogin={setLogin} />} />
         </Routes>
       </Router>

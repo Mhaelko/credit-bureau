@@ -1,4 +1,4 @@
-export const API_URL = "http://127.0.0.1:8000";
+export const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 // ========================================================================
 //                            AUTH
@@ -12,6 +12,19 @@ export async function loginUser(login, password) {
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.detail || "Помилка входу");
+  }
+  return res.json();
+}
+
+export async function loginWithGoogle(credential) {
+  const res = await fetch(`${API_URL}/auth/google`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ credential }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Помилка Google входу");
   }
   return res.json();
 }

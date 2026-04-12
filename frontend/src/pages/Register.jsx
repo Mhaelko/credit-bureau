@@ -1,32 +1,44 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { registerUser } from "../api/backend";
+import { GoogleLogin } from "@react-oauth/google";
+import { registerUser, loginWithGoogle } from "../api/backend";
 import "./Login.css";
 
-export default function Register() {
+export default function Register({ setLogin }) {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ login: "", password: "", confirm: "", full_name: "" });
-  const [error, setError] = useState("");
+  const [form, setForm]     = useState({ login: "", password: "", confirm: "", full_name: "" });
+  const [error, setError]   = useState("");
   const [loading, setLoading] = useState(false);
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
+  // Реєстрація через Google — одразу логін
+  const handleGoogleSuccess = async ({ credential }) => {
+    setError("");
+    setLoading(true);
+    try {
+      const data = await loginWithGoogle(credential);
+      localStorage.setItem("login", data.login);
+      if (data.customer_id) {
+        localStorage.setItem("customer_id", data.customer_id);
+      }
+      setLogin?.(data.login);
+      navigate("/borrower");
+    } catch (err) {
+      setError(err.message || "Помилка Google Sign-In");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Звичайна реєстрація
   const submit = async (e) => {
     e.preventDefault();
     setError("");
 
-    if (form.password !== form.confirm) {
-      setError("Паролі не збігаються");
-      return;
-    }
-    if (form.password.length < 4) {
-      setError("Пароль повинен містити мінімум 4 символи");
-      return;
-    }
-    if (!form.full_name.trim()) {
-      setError("Вкажіть ПІБ");
-      return;
-    }
+    if (form.password !== form.confirm) { setError("Паролі не збігаються"); return; }
+    if (form.password.length < 4)       { setError("Пароль мінімум 4 символи"); return; }
+    if (!form.full_name.trim())          { setError("Вкажіть ПІБ"); return; }
 
     setLoading(true);
     try {
@@ -48,6 +60,23 @@ export default function Register() {
           <span className="login-brand-name">КредитБюро</span>
         </div>
         <h2>Реєстрація</h2>
+
+        {/* Google — швидка реєстрація/вхід */}
+        <div className="google-btn-wrapper">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError("Помилка Google Sign-In")}
+            width="100%"
+            text="signup_with"
+            shape="rectangular"
+            theme="outline"
+            locale="uk"
+          />
+        </div>
+
+        <div className="login-divider">
+          <span>або заповніть форму</span>
+        </div>
 
         <form onSubmit={submit} className="login-form">
           <label>ПІБ</label>

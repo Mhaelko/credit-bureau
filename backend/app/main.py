@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.dictionaries_routes import router as dictionaries_router
@@ -13,9 +14,13 @@ from app.routers.settings_routes import router as settings_router
 
 app = FastAPI(title="Credit Bureau API")
 
+# CORS — читається з env щоб легко додавати Vercel URL
+_cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:5174")
+ALLOWED_ORIGINS = [o.strip() for o in _cors_origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

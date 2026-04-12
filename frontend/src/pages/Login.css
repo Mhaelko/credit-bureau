@@ -129,3 +129,32 @@
 .login-register-link a:hover {
   text-decoration: underline;
 }
+
+/* ── Google Sign-In ── */
+.google-btn-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.google-btn-wrapper > div {
+  width: 100% !important;
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 16px;
+  color: #8a9ab8;
+  font-size: 12px;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #d0dcea;
+}
+
