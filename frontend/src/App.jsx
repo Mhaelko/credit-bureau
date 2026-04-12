@@ -5,15 +5,17 @@ import Login    from "./pages/Login";
 import Register from "./pages/Register";
 
 // Borrower
-import BorrowerHome  from "./pages/borrower/BorrowerHome";
-import ProfilePage   from "./pages/borrower/ProfilePage";
-import ApplyPage     from "./pages/borrower/ApplyPage";
-import HistoryPage   from "./pages/borrower/HistoryPage";
-import CatalogPage   from "./pages/borrower/CatalogPage";
-import LoansPage     from "./pages/borrower/LoansPage";
+import BorrowerHome      from "./pages/borrower/BorrowerHome";
+import BorrowerDashboard from "./pages/borrower/BorrowerDashboard";
+import ProfilePage       from "./pages/borrower/ProfilePage";
+import ApplyPage         from "./pages/borrower/ApplyPage";
+import HistoryPage       from "./pages/borrower/HistoryPage";
+import CatalogPage       from "./pages/borrower/CatalogPage";
+import LoansPage         from "./pages/borrower/LoansPage";
 
 // Manager
 import ManagerHome             from "./pages/manager/ManagerHome";
+import ManagerDashboard        from "./pages/manager/ManagerDashboard";
 import ManagerApplicationsPage from "./pages/manager/ManagerApplicationsPage";
 import BlacklistPage           from "./pages/manager/BlacklistPage";
 import ActiveCreditsPage       from "./pages/manager/ActiveCreditsPage";
@@ -89,7 +91,7 @@ function App() {
 
         {/* ═══════════════ BORROWER ═══════════════ */}
         <Route path="/borrower" element={<BorrowerHome setLogin={handleSetLogin} />}>
-          <Route index element={<Navigate to="profile" replace />} />
+          <Route index element={<BorrowerDashboard customerId={localStorage.getItem("customer_id")} />} />
           <Route path="profile"  element={<ProfilePage  customerId={localStorage.getItem("customer_id")} />} />
           <Route path="catalog"  element={<CatalogPage />} />
           <Route path="apply"    element={<ApplyPage    customerId={localStorage.getItem("customer_id")} />} />
@@ -100,7 +102,7 @@ function App() {
 
         {/* ═══════════════ MANAGER ═══════════════ */}
         <Route path="/manager" element={<ManagerHome setLogin={handleSetLogin} />}>
-          <Route index element={<Navigate to="applications/3" replace />} />
+          <Route index element={<ManagerDashboard />} />
           <Route path="applications/:statusId" element={<ManagerApplicationsPage />} />
           <Route path="application/:id"        element={<ApplicationDetailsPage />} />
           <Route path="active-credits"         element={<ActiveCreditsPage />} />
