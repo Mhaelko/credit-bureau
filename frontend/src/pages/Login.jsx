@@ -14,16 +14,24 @@ export default function Login({ setLogin }) {
 
   const handleAuthResult = (data) => {
     localStorage.setItem("login", data.login);
-    if (data.login === "admin" || data.login === "manager") {
-      setLogin(data.login);
+    // Manager
+    if (data.role === "manager" || data.manager_id) {
+      if (data.manager_id) localStorage.setItem("manager_id", data.manager_id);
+      setLogin(data.login, { must_change_password: !!data.must_change_password });
       return;
     }
+    // Admin
+    if (data.login === "admin") {
+      setLogin("admin");
+      return;
+    }
+    // Borrower
     if (data.customer_id) {
-      localStorage.setItem("customer_id", data.customer_id);
+      localStorage.setItem("customer_id", String(data.customer_id));
       setLogin(data.login);
       return;
     }
-    setError("Помилка: немає customer_id");
+    setError("Помилка: не вдалося визначити роль");
   };
 
   const submit = async (e) => {
