@@ -1,9 +1,10 @@
+/* ══════════════ CRITERION CARD ══════════════ */
 .criterion-card {
   background: #fff;
   border: 1px solid #d8e6f5;
   border-radius: 14px;
-  padding: 20px 24px;
-  margin-bottom: 20px;
+  padding: 22px 26px;
+  margin-bottom: 18px;
   box-shadow: 0 2px 8px rgba(0,55,120,0.06);
 }
 
@@ -11,13 +12,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #eef2f8;
 }
 
 .criterion-name {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 800;
   color: #0057B8;
 }
@@ -33,111 +36,162 @@
 
 .weight-input {
   width: 80px;
-  padding: 6px 10px;
+  padding: 7px 10px;
   border: 1.5px solid #c8daea;
-  border-radius: 7px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
   text-align: center;
-  background: #f7fafd;
-  color: #0f2040;
+  background: #f0f6ff;
+  color: #0057B8;
+  transition: border-color 0.15s;
 }
 
 .weight-input:focus {
   outline: none;
   border-color: #0057B8;
   box-shadow: 0 0 0 3px rgba(0,87,184,0.10);
+  background: #fff;
 }
 
-/* ── Ranges table ── */
+/* ══════════════ RANGES TABLE ══════════════ */
 .ranges-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;   /* ← ключ для рівних колонок */
 }
+
+/* Фіксовані ширини колонок */
+.ranges-table col.col-label  { width: 28%; }
+.ranges-table col.col-bound  { width: 12%; }
+.ranges-table col.col-value  { width: 22%; }
+.ranges-table col.col-contrib { width: 26%; }
 
 .ranges-table th {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #4a6080;
-  padding: 8px 10px;
-  border-bottom: 1px solid #d8e6f5;
+  letter-spacing: 0.6px;
+  color: #7a90b0;
+  padding: 9px 12px;
+  border-bottom: 2px solid #d8e6f5;
+  background: #f7fafd;
   text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
+.ranges-table th.th-center  { text-align: center; }
+.ranges-table th.th-right   { text-align: right; }
+
 .ranges-table td {
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-bottom: 1px solid #eef2f8;
-  font-size: 13px;
+  font-size: 14px;
   color: #0f2040;
+  vertical-align: middle;
+  overflow: hidden;
 }
 
 .ranges-table tr:last-child td { border-bottom: none; }
+.ranges-table tr:hover td      { background: #f7fbff; }
 
-.range-label   { font-weight: 600; color: #0f2040; }
-.range-bound   { color: #7a90b0; text-align: center; }
-.range-contrib { font-weight: 700; color: #0057B8; text-align: right; }
+/* Колонки */
+.range-label {
+  font-weight: 600;
+  color: #0f2040;
+}
+
+.range-bound {
+  color: #7a90b0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.range-value-cell {
+  text-align: center;
+}
 
 .range-value-input {
-  width: 90px;
-  padding: 5px 8px;
+  width: 100%;
+  max-width: 120px;
+  padding: 7px 10px;
   border: 1.5px solid #c8daea;
-  border-radius: 6px;
-  font-size: 13px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
   text-align: center;
   background: #f7fafd;
   color: #0f2040;
+  box-sizing: border-box;
+  transition: border-color 0.15s, background 0.15s;
 }
 
 .range-value-input:focus {
   outline: none;
   border-color: #0057B8;
-  box-shadow: 0 0 0 2px rgba(0,87,184,0.10);
+  box-shadow: 0 0 0 3px rgba(0,87,184,0.10);
+  background: #fff;
 }
 
-/* ── Summary ── */
+.range-contrib {
+  font-weight: 700;
+  color: #0057B8;
+  text-align: right;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ══════════════ SUMMARY BLOCK ══════════════ */
 .scoring-summary-card {
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 .summary-grid {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
 .summary-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
-  border-radius: 8px;
+  padding: 12px 16px;
+  border-radius: 10px;
   background: #f7fafd;
   border: 1px solid #e8eef5;
 }
 
 .summary-row.highlight {
   background: #f0f6ff;
-  border-color: #c0d8f5;
+  border-color: #b8d4f5;
 }
 
-.summary-label { font-size: 14px; color: #4a6080; font-weight: 600; }
+.summary-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a6080;
+}
 
 .summary-val {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
   color: #0f2040;
+  font-variant-numeric: tabular-nums;
 }
 
 .pass-score {
   color: #0057B8;
-  font-size: 22px;
+  font-size: 24px;
 }
 
 .pass-pct-input {
-  width: 100px;
+  width: 90px !important;
+  padding: 7px 10px !important;
   text-align: center;
   font-size: 16px !important;
-  font-weight: 700;
+  font-weight: 700 !important;
+  color: #0057B8 !important;
 }

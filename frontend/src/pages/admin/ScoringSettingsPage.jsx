@@ -99,13 +99,20 @@ export default function ScoringSettingsPage() {
           </div>
 
           <table className="ranges-table">
+            <colgroup>
+              <col className="col-label" />
+              <col className="col-bound" />
+              <col className="col-bound" />
+              <col className="col-value" />
+              <col className="col-contrib" />
+            </colgroup>
             <thead>
               <tr>
                 <th>Діапазон</th>
-                <th>Від</th>
-                <th>До</th>
-                <th>Значення</th>
-                <th>Внесок (знач × вага)</th>
+                <th className="th-center">Від</th>
+                <th className="th-center">До</th>
+                <th className="th-center">Значення</th>
+                <th className="th-right">Внесок (знач × вага)</th>
               </tr>
             </thead>
             <tbody>
@@ -114,7 +121,7 @@ export default function ScoringSettingsPage() {
                   <td className="range-label">{r.label}</td>
                   <td className="range-bound">{r.range_min ?? "−∞"}</td>
                   <td className="range-bound">{r.range_max ?? "+∞"}</td>
-                  <td>
+                  <td className="range-value-cell">
                     <input
                       type="number" step="10" min="0"
                       className="range-value-input"
