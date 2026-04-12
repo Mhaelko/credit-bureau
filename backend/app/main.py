@@ -14,14 +14,17 @@ from app.routers.settings_routes import router as settings_router
 
 app = FastAPI(title="Credit Bureau API")
 
-# CORS — читається з env щоб легко додавати Vercel URL
-_cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:5174")
-ALLOWED_ORIGINS = [o.strip() for o in _cors_origins.split(",") if o.strip()]
+# CORS — якщо CORS_ORIGINS не задано або містить "*" → дозволяємо всі origin
+_cors_env = os.getenv("CORS_ORIGINS", "*")
+if _cors_env.strip() == "*":
+    ALLOWED_ORIGINS = ["*"]
+else:
+    ALLOWED_ORIGINS = [o.strip() for o in _cors_env.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=ALLOWED_ORIGINS != ["*"],  # credentials несумісні з wildcard
     allow_methods=["*"],
     allow_headers=["*"],
 )
