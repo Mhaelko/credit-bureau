@@ -15,11 +15,17 @@ export default function BorrowerDashboard({ customerId }) {
       .catch(() => {});
 
     getMyLoans(customerId)
-      .then((d) => setLoanCount(Array.isArray(d) ? d.length : 0))
+      .then((d) => {
+        const list = Array.isArray(d) ? d : (d.loans || []);
+        setLoanCount(list.length);
+      })
       .catch(() => setLoanCount(0));
 
     getMyApplications(customerId)
-      .then((d) => setAppCount(Array.isArray(d) ? d.length : 0))
+      .then((d) => {
+        const list = Array.isArray(d) ? d : (d.applications || []);
+        setAppCount(list.length);
+      })
       .catch(() => setAppCount(0));
   }, [customerId]);
 

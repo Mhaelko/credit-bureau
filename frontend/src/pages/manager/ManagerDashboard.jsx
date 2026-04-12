@@ -14,10 +14,11 @@ export default function ManagerDashboard() {
       getApplicationsByStatus(5).catch(() => []),
       getApplicationsByStatus(6).catch(() => []),
     ]).then(([pending, approved, rejected]) => {
+      const len = (d) => (Array.isArray(d) ? d : (d.applications || [])).length;
       setCounts({
-        pending:  Array.isArray(pending)  ? pending.length  : 0,
-        approved: Array.isArray(approved) ? approved.length : 0,
-        rejected: Array.isArray(rejected) ? rejected.length : 0,
+        pending:  len(pending),
+        approved: len(approved),
+        rejected: len(rejected),
       });
     });
   }, []);
