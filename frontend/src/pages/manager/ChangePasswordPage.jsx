@@ -24,7 +24,9 @@ export default function ChangePasswordPage({ setLogin }) {
       await changeManagerPassword(login, oldPw, newPw);
       // Очистити must_change_password флаг локально
       localStorage.removeItem("must_change_password");
-      navigate("/manager");
+      // Викликаємо setLogin щоб App.jsx перерендерився і побачив оновлений localStorage
+      if (setLogin) setLogin(login);
+      else navigate("/manager");
     } catch (err) {
       setError(err.message || "Помилка зміни пароля");
     } finally {
