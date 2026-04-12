@@ -2,34 +2,65 @@ from app.db import get_connection
 
 
 # --------------------------------------------------------
+# GET CUSTOMER BY LOGIN (для auth)
+# --------------------------------------------------------
+def get_customer_by_login(login: str):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT customer_id, login, password_hash
+        FROM customer
+        WHERE login = %s;
+    """, (login,))
+    row = cur.fetchone()
+    if not row:
+        return None
+    return {"customer_id": row[0], "login": row[1], "password_hash": row[2]}
+
+
+# --------------------------------------------------------
+# CREATE CUSTOMER (реєстрація)
+# --------------------------------------------------------
+def create_customer(login: str, password_hash: str, full_name: str):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO customer
+            (login, password_hash, full_name, birth_date, citizenship, monthly_income,
+             employment_type_id, employment_term_months)
+        VALUES (%s, %s, %s, '1990-01-01', 1, 0, 1, 0)
+        RETURNING customer_id;
+    """, (login, password_hash, full_name))
+    new_id = cur.fetchone()[0]
+    conn.commit()
+    return {"customer_id": new_id, "login": login}
+
+
+# --------------------------------------------------------
 # GET CUSTOMER PROFILE
 # --------------------------------------------------------
 def get_customer_profile(customer_id: int):
     conn = get_connection()
     cur = conn.cursor()
-
     cur.execute("""
-        SELECT 
+        SELECT
             customer_id,
             login,
             full_name,
             birth_date,
-            citizenship,              -- int FK
+            citizenship,
             monthly_income,
             employment_type_id,
             employment_term_months
         FROM customer
         WHERE customer_id = %s;
     """, (customer_id,))
-
     row = cur.fetchone()
-
     if not row:
         return {"error": "Customer not found"}
-
     return {
         "customer_id": row[0],
-        "login": row[1],    # cannot be changed
+        "login": row[1],
         "full_name": row[2],
         "birth_date": row[3],
         "citizenship": row[4],
@@ -40,12 +71,11 @@ def get_customer_profile(customer_id: int):
 
 
 # --------------------------------------------------------
-# UPDATE CUSTOMER PROFILE  (login is NOT updated)
+# UPDATE CUSTOMER PROFILE
 # --------------------------------------------------------
 def update_customer_profile(customer_id: int, data: dict):
     conn = get_connection()
     cur = conn.cursor()
-
     cur.execute("""
         UPDATE customer SET
             full_name = %s,
@@ -58,56 +88,50 @@ def update_customer_profile(customer_id: int, data: dict):
     """, (
         data["full_name"],
         data["birth_date"],
-        data["citizenship"],             # integer FK
+        data["citizenship"],
         data["monthly_income"],
         data["employment_type_id"],
         data["employment_term_months"],
         customer_id
     ))
-
     conn.commit()
     return {"status": "updated"}
 
 
 # --------------------------------------------------------
-# LOGIN — GET OR CREATE
+# MAX LOAN CALCULATION
 # --------------------------------------------------------
-def get_or_create_customer(login: str):
+def get_max_loan_info(customer_id: int):
+    """Повертає дохід та суму поточних щомісячних зобов'язань."""
     conn = get_connection()
     cur = conn.cursor()
 
-    # check if login exists
     cur.execute("""
-        SELECT customer_id
-        FROM customer
-        WHERE login = %s;
-    """, (login,))
-
+        SELECT monthly_income FROM customer WHERE customer_id = %s;
+    """, (customer_id,))
     row = cur.fetchone()
+    if not row:
+        return {"error": "Customer not found"}
 
-    if row:
-        return {
-            "customer_id": row[0],
-            "login": login,
-            "status": "existing"
-        }
+    monthly_income = float(row[0] or 0)
 
-    # create new customer (minimal defaults)
+    # Сума активних щомісячних платежів
     cur.execute("""
-        INSERT INTO customer
-            (login, full_name, birth_date, citizenship, monthly_income, employment_type_id, employment_term_months)
-        VALUES
-            (%s, %s, '1990-01-01', 1, 0, 1, 0)
-        RETURNING customer_id;
-    """, (login, login))
+        SELECT COALESCE(SUM(c.monthly_payment), 0)
+        FROM credit c
+        JOIN application a ON a.application_id = c.application_id
+        WHERE a.customer_id = %s
+          AND c.end_date >= CURRENT_DATE;
+    """, (customer_id,))
+    existing_obligations = float(cur.fetchone()[0] or 0)
 
-    new_id = cur.fetchone()[0]
-    conn.commit()
+    # Максимально допустимий щомісячний платіж (DTI 40%)
+    max_monthly_payment = max(0, monthly_income * 0.4 - existing_obligations)
 
     return {
-        "customer_id": new_id,
-        "login": login,
-        "status": "created"
+        "monthly_income": monthly_income,
+        "existing_monthly_obligations": existing_obligations,
+        "max_monthly_payment": round(max_monthly_payment, 2),
     }
 
 
@@ -117,9 +141,8 @@ def get_or_create_customer(login: str):
 def get_customer_applications(customer_id: int):
     conn = get_connection()
     cur = conn.cursor()
-
     cur.execute("""
-        SELECT 
+        SELECT
             a.application_id,
             a.amount_requested,
             a.created_at,
@@ -130,57 +153,71 @@ def get_customer_applications(customer_id: int):
         WHERE a.customer_id = %s
         ORDER BY a.created_at DESC;
     """, (customer_id,))
-
     rows = cur.fetchall()
-
-    apps = []
-    for r in rows:
-        apps.append({
-            "application_id": r[0],
-            "amount_requested": r[1],
-            "created_at": r[2],
-            "status_id": r[3],
-            "status_name": r[4]
-        })
-
-    return {"applications": apps}
-
+    return {
+        "applications": [
+            {
+                "application_id": r[0],
+                "amount_requested": r[1],
+                "created_at": r[2],
+                "status_id": r[3],
+                "status_name": r[4]
+            }
+            for r in rows
+        ]
+    }
 
 
 # --------------------------------------------------------
-# GET CUSTOMER LOANS
+# GET CUSTOMER LOANS (з залишком боргу)
 # --------------------------------------------------------
 def get_customer_loans(customer_id: int):
     conn = get_connection()
     cur = conn.cursor()
-
     cur.execute("""
-        SELECT 
+        SELECT
             c.credit_id,
             c.amount_approved,
             c.interest_rate,
             c.monthly_payment,
             c.start_date,
             c.end_date,
-            a.application_id
+            a.application_id,
+            COALESCE(SUM(CASE WHEN ps.is_paid = FALSE THEN ps.payment_amount + ps.penalty_amount ELSE 0 END), 0) AS remaining_balance,
+            COUNT(CASE WHEN ps.is_paid = FALSE THEN 1 END) AS payments_left
         FROM credit c
         INNER JOIN application a ON a.application_id = c.application_id
-        WHERE a.customer_id = %s;
+        LEFT JOIN payment_schedule ps ON ps.credit_id = c.credit_id
+        WHERE a.customer_id = %s
+        GROUP BY c.credit_id, c.amount_approved, c.interest_rate, c.monthly_payment,
+                 c.start_date, c.end_date, a.application_id
+        ORDER BY c.start_date DESC;
     """, (customer_id,))
-
     rows = cur.fetchall()
-
     return {
         "loans": [
             {
                 "credit_id": r[0],
-                "amount_approved": r[1],
-                "interest_rate": r[2],
-                "monthly_payment": r[3],
+                "amount_approved": float(r[1]),
+                "interest_rate": float(r[2]),
+                "monthly_payment": float(r[3]),
                 "start_date": r[4],
                 "end_date": r[5],
                 "application_id": r[6],
+                "remaining_balance": float(r[7]),
+                "payments_left": r[8],
             }
             for r in rows
         ]
     }
+
+
+# --------------------------------------------------------
+# LEGACY: get_or_create_customer (для зворотної сумісності)
+# --------------------------------------------------------
+def get_or_create_customer(login: str):
+    existing = get_customer_by_login(login)
+    if existing:
+        return {"customer_id": existing["customer_id"], "login": login, "status": "existing"}
+    customer = create_customer(login, None, login)
+    return {"customer_id": customer["customer_id"], "login": login, "status": "created"}

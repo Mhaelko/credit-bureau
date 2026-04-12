@@ -7,28 +7,31 @@ from app.routers.manager_routes import router as manager_router
 from app.routers.auth_routes import router as auth_router
 from app.routers.product_routes import router as product_router
 from app.routers import payment_routes
-
+from app.routers.blacklist_routes import router as blacklist_router
+from app.routers.settings_routes import router as settings_router
 
 
 app = FastAPI(title="Credit Bureau API")
 
-# CORS FIX — ОБОВ’ЯЗКОВО ДЛЯ ФРОНТУ
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],        # дозволяємо всі домени
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],        # дозволяємо GET, POST, OPTIONS і т.д.
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Підключення роутерів
 app.include_router(application_router, prefix="/application", tags=["Application"])
 app.include_router(customer_router, prefix="/customer", tags=["Customer"])
 app.include_router(manager_router, prefix="/manager", tags=["Manager"])
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(dictionaries_router, prefix="/dictionaries", tags=["Dictionaries"])
-app.include_router(product_router,prefix="/product", tags=["Product"])
+app.include_router(product_router, prefix="/product", tags=["Product"])
 app.include_router(payment_routes.router, prefix="/payment", tags=["Payment"])
+app.include_router(blacklist_router, prefix="/blacklist", tags=["Blacklist"])
+app.include_router(settings_router, prefix="/settings", tags=["Settings"])
+
+
 @app.get("/")
 def root():
     return {"status": "API is running"}

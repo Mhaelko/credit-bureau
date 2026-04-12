@@ -5,6 +5,8 @@ import {
   createManagerDecision,
   getPaymentSchedule,
   payScheduleItem,
+  payPenalty,
+  managerPayScheduleItem,
 } from "../api/backend";
 
 import "./ApplicationDetailsPage.css";
@@ -19,6 +21,8 @@ export default function ApplicationDetailsPage() {
 
   const [data, setData] = useState(null);
   const [schedule, setSchedule] = useState([]);
+  const [remainingBalance, setRemainingBalance] = useState(null);
+  const [payingId, setPayingId] = useState(null);
 
   useEffect(() => {
     load();
@@ -34,16 +38,59 @@ export default function ApplicationDetailsPage() {
     const res = await getPaymentSchedule(id);
     if (res?.schedule) {
       setSchedule(res.schedule);
+      setRemainingBalance(res.remaining_balance ?? null);
     }
   }
 
   async function handlePay(paymentId) {
+    setPayingId(paymentId);
     try {
       await payScheduleItem(paymentId);
-      await loadSchedule(); // refresh list
-    } catch (err) {
+      await loadSchedule();
+    } catch {
       alert("Помилка оплати");
+    } finally {
+      setPayingId(null);
     }
+  }
+
+  async function handlePayPenalty(paymentId) {
+    setPayingId(paymentId);
+    try {
+      await payPenalty(paymentId);
+      await loadSchedule();
+    } catch {
+      alert("Помилка оплати штрафу");
+    } finally {
+      setPayingId(null);
+    }
+  }
+
+  async function handleManagerPay(paymentId) {
+    setPayingId(paymentId);
+    try {
+      await managerPayScheduleItem(paymentId);
+      await loadSchedule();
+    } catch {
+      alert("Помилка зарахування платежу");
+    } finally {
+      setPayingId(null);
+    }
+  }
+
+  async function handleDecision(decision) {
+    const comment = decision === "rejected"
+      ? (window.prompt("Коментар (необов'язково):") ?? "")
+      : "";
+
+    await createManagerDecision(id, {
+      manager_id: 1,
+      final_decision: decision,
+      comment,
+      corrected_amount: null,
+      corrected_term: null,
+    });
+    navigate("/manager/applications/3");
   }
 
   if (!data) return <p>Завантаження…</p>;
@@ -53,19 +100,27 @@ export default function ApplicationDetailsPage() {
   const otherApps = data.other_applications || [];
   const BKIreports = data.bki_reports || [];
 
+  const overdueCount = schedule.filter(
+    (p) => !p.is_paid && p.penalty_amount > 0
+  ).length;
+
   return (
     <div className="details-wrapper">
       <h1 className="page-title">Заявка #{id}</h1>
 
-      {/* ================== ОСНОВНІ ДАНІ ================== */}
+      {/* ===== ОСНОВНІ ДАНІ ===== */}
       <div className="details-grid">
-        
-        {/* --- Дані по заявці --- */}
         <div className="card">
           <h2>Дані по заявці</h2>
-
           <div className="row"><span>Статус:</span><strong>{app.status_name}</strong></div>
-          <div className="row"><span>Сума:</span><strong>{app.amount_requested} грн.</strong></div>
+          <div className="row"><span>Продукт:</span><strong>{app.product_name || "—"}</strong></div>
+          <div className="row"><span>Сума запиту:</span><strong>{Number(app.amount_requested).toLocaleString("uk-UA")} грн</strong></div>
+          {app.down_payment_amount > 0 && (
+            <div className="row"><span>Перший внесок:</span><strong>{Number(app.down_payment_amount).toLocaleString("uk-UA")} грн</strong></div>
+          )}
+          {app.down_payment_amount > 0 && (
+            <div className="row"><span>Сума кредиту:</span><strong>{(Number(app.amount_requested) - Number(app.down_payment_amount)).toLocaleString("uk-UA")} грн</strong></div>
+          )}
           <div className="row"><span>Термін:</span><strong>{app.term_months} міс.</strong></div>
           <div className="row"><span>Ціль:</span><strong>{app.purpose}</strong></div>
           <div className="row">
@@ -74,44 +129,39 @@ export default function ApplicationDetailsPage() {
           </div>
         </div>
 
-        {/* --- Дані позичальника --- */}
         <div className="card">
           <h2>Дані позичальника</h2>
-
           <div className="row"><span>ПІБ:</span><strong>{borrower.full_name}</strong></div>
           <div className="row">
             <span>Дата народження:</span>
-            <strong>{new Date(borrower.birth_date).toLocaleDateString("uk-UA")}</strong>
+            <strong>{borrower.birth_date ? new Date(borrower.birth_date).toLocaleDateString("uk-UA") : "—"}</strong>
           </div>
           <div className="row"><span>Громадянство:</span><strong>{borrower.citizenship_name}</strong></div>
-          <div className="row"><span>Місячний дохід:</span><strong>{borrower.monthly_income} грн.</strong></div>
+          <div className="row"><span>Місячний дохід:</span><strong>{Number(borrower.monthly_income).toLocaleString("uk-UA")} грн</strong></div>
           <div className="row"><span>Тип зайнятості:</span><strong>{borrower.employment_type_name}</strong></div>
           <div className="row"><span>Стаж:</span><strong>{borrower.employment_term_months} міс.</strong></div>
         </div>
       </div>
 
-      {/* ================== ТІЛЬКИ ДЛЯ МЕНЕДЖЕРА ================== */}
+      {/* ===== ТІЛЬКИ ДЛЯ МЕНЕДЖЕРА: скоринг + бізнес-правила ===== */}
       {isManager && (
         <div className="details-grid">
-
-          {/* BUSINESS RULES */}
           <div className="card">
             <h2>Перевірка бізнес-правил</h2>
-
-            <div className="row"><span>Дохід:</span><strong>{data.business_rules.income_ok ? "Так" : "Ні"}</strong></div>
-            <div className="row"><span>DTI:</span><strong>{data.business_rules.dti_ok ? "Так" : "Ні"}</strong></div>
-            <div className="row"><span>Зайнятість:</span><strong>{data.business_rules.employment_type_ok ? "Так" : "Ні"}</strong></div>
-            <div className="row"><span>Термін зайнятості:</span><strong>{data.business_rules.employment_ok ? "Так" : "Ні"}</strong></div>
+            <div className="row"><span>Дохід:</span><strong className={data.business_rules.income_ok ? "ok" : "fail"}>{data.business_rules.income_ok ? "✅ OK" : "❌ Не відповідає"}</strong></div>
+            <div className="row"><span>DTI:</span><strong className={data.business_rules.dti_ok ? "ok" : "fail"}>{data.business_rules.dti_ok ? "✅ OK" : "❌ Не відповідає"}</strong></div>
+            <div className="row"><span>Тип зайнятості:</span><strong className={data.business_rules.employment_type_ok ? "ok" : "fail"}>{data.business_rules.employment_type_ok ? "✅ OK" : "❌ Не відповідає"}</strong></div>
+            <div className="row"><span>Стаж:</span><strong className={data.business_rules.employment_ok ? "ok" : "fail"}>{data.business_rules.employment_ok ? "✅ OK" : "❌ Не відповідає"}</strong></div>
             <div className="row">
               <span>Загальний результат:</span>
-              <strong>{data.business_rules.overall_result ? "PASS" : "FAILED"}</strong>
+              <strong className={data.business_rules.overall_result ? "ok" : "fail"}>
+                {data.business_rules.overall_result ? "✅ PASS" : "❌ FAIL"}
+              </strong>
             </div>
           </div>
 
-          {/* SCORING */}
           <div className="card">
             <h2>Скоринг</h2>
-
             <div className="row"><span>Скоринговий бал:</span><strong>{data.scoring.scoring_score}</strong></div>
             <div className="row"><span>Рівень ризику:</span><strong>{data.scoring.risk_level_name}</strong></div>
             <div className="row"><span>Версія моделі:</span><strong>{data.scoring.model_version}</strong></div>
@@ -119,70 +169,130 @@ export default function ApplicationDetailsPage() {
         </div>
       )}
 
-      {/* ================== БКІ ================== */}
-      {isManager && (
-        <div className="other-apps-wrapper">
-          <h2>Бюро кредитних історій</h2>
-
-          <table className="history-table">
-            <thead>
-              <tr>
-                <th>Звіт №</th>
-                <th>Дата звіту</th>
-                <th>Всього кредитів</th>
-                <th>Прострочених кредитів</th>
-                <th>Макс. прострочка</th>
-                <th>БКІ скоринг</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {BKIreports.map((a) => (
-                <tr key={a.report_id}>
-                  <td>{a.report_id}</td>
-                  <td>{new Date(a.report_date).toLocaleDateString("uk-UA")}</td>
-                  <td>{a.total_loans}</td>
-                  <td>{a.overdue_loans}</td>
-                  <td>{a.max_overdue_days}</td>
-                  <td>{a.external_score}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* ===== РЕКОМЕНДАЦІЯ СИСТЕМИ ===== */}
+      {isManager && data.recommendation && (
+        <div className="other-apps-wrapper recommendation-box">
+          <h2>Рекомендація системи</h2>
+          <p className="recommendation-text">{data.recommendation}</p>
         </div>
       )}
 
-      {/* ================== ГРАФІК ПЛАТЕЖІВ ================== */}
+      {/* ===== БКІ ===== */}
+      {isManager && (
+        <div className="other-apps-wrapper">
+          <h2>Бюро кредитних історій</h2>
+          {BKIreports.length === 0 && <p className="empty-hint">Дані БКІ відсутні.</p>}
+          {BKIreports.length > 0 && (
+            <table className="history-table">
+              <thead>
+                <tr>
+                  <th>Звіт №</th>
+                  <th>Дата</th>
+                  <th>Всього кредитів</th>
+                  <th>Прострочених</th>
+                  <th>Макс. прострочка</th>
+                  <th>БКІ скоринг</th>
+                </tr>
+              </thead>
+              <tbody>
+                {BKIreports.map((a) => (
+                  <tr key={a.report_id}>
+                    <td>{a.report_id}</td>
+                    <td>{new Date(a.report_date).toLocaleDateString("uk-UA")}</td>
+                    <td>{a.total_loans}</td>
+                    <td className={a.overdue_loans > 0 ? "text-danger" : ""}>{a.overdue_loans}</td>
+                    <td className={a.max_overdue_days > 30 ? "text-danger" : ""}>{a.max_overdue_days}</td>
+                    <td>{a.external_score}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {/* ===== ГРАФІК ПЛАТЕЖІВ ===== */}
       {schedule.length > 0 && (
         <div className="other-apps-wrapper">
-          <h2>Графік платежів</h2>
+          <div className="schedule-header">
+            <h2>Графік платежів</h2>
+            {remainingBalance !== null && (
+              <div className="remaining-balance">
+                Залишок боргу: <strong>{Number(remainingBalance).toLocaleString("uk-UA")} грн</strong>
+                {overdueCount > 0 && (
+                  <span className="overdue-warning"> · {overdueCount} прострочених</span>
+                )}
+              </div>
+            )}
+          </div>
 
           <table className="history-table">
             <thead>
               <tr>
                 <th>Дата</th>
-                <th>Сума</th>
+                <th>Основний платіж</th>
+                <th>Штраф</th>
                 <th>Статус</th>
                 {!isManager && <th>Сплатити</th>}
+                {isManager && <th>Зарахувати</th>}
               </tr>
             </thead>
-
             <tbody>
               {schedule.map((p) => (
-                <tr key={p.payment_id}>
+                <tr key={p.payment_id} className={!p.is_paid && p.penalty_amount > 0 ? "row-penalty" : ""}>
                   <td>{new Date(p.payment_date).toLocaleDateString("uk-UA")}</td>
-                  <td>{p.payment_amount} грн</td>
-                  <td>{p.is_paid ? "Оплачено" : "Очікується"}</td>
+                  <td>{Number(p.payment_amount).toLocaleString("uk-UA")} грн</td>
+                  <td>
+                    {p.penalty_amount > 0 ? (
+                      <span className={p.penalty_paid ? "penalty-paid" : "penalty-unpaid"}>
+                        {Number(p.penalty_amount).toLocaleString("uk-UA")} грн
+                        {p.penalty_paid ? " (сплачено)" : ""}
+                      </span>
+                    ) : "—"}
+                  </td>
+                  <td>
+                    {p.is_paid
+                      ? <span className="status-paid-badge">Оплачено</span>
+                      : <span className="status-pending-badge">Очікується</span>}
+                  </td>
 
+                  {/* Позичальник */}
                   {!isManager && (
+                    <td className="pay-actions">
+                      {!p.is_paid && (
+                        <button
+                          className="pay-btn"
+                          onClick={() => handlePay(p.payment_id)}
+                          disabled={payingId === p.payment_id}
+                        >
+                          {payingId === p.payment_id ? "…" : "Сплатити"}
+                        </button>
+                      )}
+                      {!p.is_paid && !p.penalty_paid && p.penalty_amount > 0 && (
+                        <button
+                          className="pay-btn penalty-btn"
+                          onClick={() => handlePayPenalty(p.payment_id)}
+                          disabled={payingId === p.payment_id}
+                        >
+                          Штраф
+                        </button>
+                      )}
+                      {p.is_paid && "—"}
+                    </td>
+                  )}
+
+                  {/* Менеджер */}
+                  {isManager && (
                     <td>
                       {!p.is_paid ? (
-                        <button className="pay-btn" onClick={() => handlePay(p.payment_id)}>
-                          Сплатити
+                        <button
+                          className="pay-btn"
+                          onClick={() => handleManagerPay(p.payment_id)}
+                          disabled={payingId === p.payment_id}
+                        >
+                          {payingId === p.payment_id ? "…" : "Зарахувати"}
                         </button>
-                      ) : (
-                        "-"
-                      )}
+                      ) : "—"}
                     </td>
                   )}
                 </tr>
@@ -192,11 +302,28 @@ export default function ApplicationDetailsPage() {
         </div>
       )}
 
-      {/* ================== ІНШІ ЗАЯВКИ КЛІЄНТА ================== */}
+      {/* ===== РІШЕННЯ МЕНЕДЖЕРА ===== */}
+      {data.manager_decision && (
+        <div className="other-apps-wrapper">
+          <h2>Рішення менеджера</h2>
+          <div className="row"><span>Рішення:</span>
+            <strong className={data.manager_decision.final_decision === "approved" ? "ok" : "fail"}>
+              {data.manager_decision.final_decision === "approved" ? "✅ Схвалено" : "❌ Відхилено"}
+            </strong>
+          </div>
+          {data.manager_decision.comment && (
+            <div className="row"><span>Коментар:</span><span>{data.manager_decision.comment}</span></div>
+          )}
+          {data.manager_decision.corrected_amount && (
+            <div className="row"><span>Скоригована сума:</span><strong>{Number(data.manager_decision.corrected_amount).toLocaleString("uk-UA")} грн</strong></div>
+          )}
+        </div>
+      )}
+
+      {/* ===== ІНШІ ЗАЯВКИ КЛІЄНТА ===== */}
       {isManager && otherApps.length > 0 && (
         <div className="other-apps-wrapper">
           <h2>Інші заявки цього клієнта</h2>
-
           <table className="history-table">
             <thead>
               <tr>
@@ -207,7 +334,6 @@ export default function ApplicationDetailsPage() {
                 <th>Дата</th>
               </tr>
             </thead>
-
             <tbody>
               {otherApps.map((a) => (
                 <tr key={a.application_id}>
@@ -219,7 +345,7 @@ export default function ApplicationDetailsPage() {
                   </td>
                   <td>{a.status_name}</td>
                   <td>{a.scoring_score}</td>
-                  <td>{a.amount_requested} грн</td>
+                  <td>{Number(a.amount_requested).toLocaleString("uk-UA")} грн</td>
                   <td>{new Date(a.created_at).toLocaleString("uk-UA")}</td>
                 </tr>
               ))}
@@ -228,42 +354,24 @@ export default function ApplicationDetailsPage() {
         </div>
       )}
 
-      {/* ================== КНОПКИ ================== */}
+      {/* ===== КНОПКИ ===== */}
       <div className="btn-block">
         {isManager && fromPending && (
           <>
             <button
               className="btn success"
-              onClick={() =>
-                createManagerDecision(id, {
-                  manager_id: 1,
-                  final_decision: "approved",
-                  comment: "",
-                  corrected_amount: null,
-                  corrected_term: null,
-                }).then(() => navigate("/manager/applications/3"))
-              }
+              onClick={() => handleDecision("approved")}
             >
               Схвалити
             </button>
-
             <button
               className="btn danger"
-              onClick={() =>
-                createManagerDecision(id, {
-                  manager_id: 1,
-                  final_decision: "rejected",
-                  comment: "",
-                  corrected_amount: null,
-                  corrected_term: null,
-                }).then(() => navigate("/manager/applications/3"))
-              }
+              onClick={() => handleDecision("rejected")}
             >
               Відхилити
             </button>
           </>
         )}
-
         <button className="btn primary" onClick={() => navigate(-1)}>
           Назад
         </button>
