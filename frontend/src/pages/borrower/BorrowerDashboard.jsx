@@ -17,7 +17,8 @@ export default function BorrowerDashboard({ customerId }) {
     getMyLoans(customerId)
       .then((d) => {
         const list = Array.isArray(d) ? d : (d.loans || []);
-        setLoanCount(list.length);
+        // Рахуємо тільки активні (залишились непогашені платежі)
+        setLoanCount(list.filter((l) => l.payments_left > 0).length);
       })
       .catch(() => setLoanCount(0));
 
