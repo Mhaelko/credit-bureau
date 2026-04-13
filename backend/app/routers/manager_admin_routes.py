@@ -5,7 +5,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from app.repositories.manager_user_repo import (
-    get_all_managers, create_manager, set_active, get_manager_by_login
+    get_all_managers, create_manager, set_active, get_manager_by_login, get_manager_by_id
 )
 from app.repositories.log_repo import write_log
 
@@ -39,13 +39,17 @@ def add_manager(data: CreateManagerInput):
 
 @router.patch("/{manager_id}/activate")
 def activate(manager_id: int):
+    mgr = get_manager_by_id(manager_id)
     set_active(manager_id, True)
-    write_log("admin", f"Менеджера #{manager_id} активовано", actor="Адміністратор", entity_id=manager_id)
+    label = f"'{mgr['login']}' ({mgr['full_name']})" if mgr else f"#{manager_id}"
+    write_log("admin", f"Менеджера {label} активовано", actor="Адміністратор", entity_id=manager_id)
     return {"ok": True}
 
 
 @router.patch("/{manager_id}/deactivate")
 def deactivate(manager_id: int):
+    mgr = get_manager_by_id(manager_id)
     set_active(manager_id, False)
-    write_log("admin", f"Менеджера #{manager_id} деактивовано", actor="Адміністратор", entity_id=manager_id)
+    label = f"'{mgr['login']}' ({mgr['full_name']})" if mgr else f"#{manager_id}"
+    write_log("admin", f"Менеджера {label} деактивовано", actor="Адміністратор", entity_id=manager_id)
     return {"ok": True}

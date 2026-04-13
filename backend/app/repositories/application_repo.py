@@ -1,7 +1,7 @@
 from app.db import get_connection
 from app.services.scoring import calculate_scoring, generate_recommendation
 from app.services.business_rules import check_rules
-from app.repositories.blacklist_repo import is_blacklisted
+from app.repositories.blacklist_repo import is_blacklisted, get_customer_name
 from app.repositories.log_repo import write_log
 
 
@@ -20,9 +20,11 @@ def create_application(data):
               data.term_months, data.purpose, data.down_payment_amount))
         application_id = cur.fetchone()[0]
         conn.commit()
+        customer = get_customer_name(data.customer_id)
+        c_label  = f"'{customer['login']}' ({customer['full_name']})" if customer else f"#{data.customer_id}"
         write_log("application",
-                  f"Заявку #{application_id} автоматично відхилено — клієнт у чорному списку",
-                  actor=f"Клієнт #{data.customer_id}", entity_id=application_id)
+                  f"Заявку #{application_id} від клієнта {c_label} автоматично відхилено — клієнт у чорному списку",
+                  actor=f"Клієнт {c_label}", entity_id=application_id)
         return {"application_id": application_id, "status": "auto_rejected", "reason": "blacklisted"}
 
     # Створюємо заявку
@@ -86,14 +88,18 @@ def create_application(data):
     )
     conn.commit()
 
+    customer = get_customer_name(data.customer_id)
+    c_label  = f"'{customer['login']}' ({customer['full_name']})" if customer else f"#{data.customer_id}"
     if status == 2:
         write_log("application",
-                  f"Заявку #{application_id} на суму {data.amount_requested:.0f} грн автоматично відхилено (бізнес-правила / скоринг)",
-                  actor=f"Клієнт #{data.customer_id}", entity_id=application_id)
+                  f"Заявку #{application_id} від клієнта {c_label} на суму {data.amount_requested:.0f} грн "
+                  f"автоматично відхилено (бізнес-правила / скоринг)",
+                  actor=f"Клієнт {c_label}", entity_id=application_id)
     else:
         write_log("application",
-                  f"Подано заявку #{application_id} на суму {data.amount_requested:.0f} грн, термін {data.term_months} міс.",
-                  actor=f"Клієнт #{data.customer_id}", entity_id=application_id)
+                  f"Клієнт {c_label} подав заявку #{application_id} на суму {data.amount_requested:.0f} грн, "
+                  f"термін {data.term_months} міс.",
+                  actor=f"Клієнт {c_label}", entity_id=application_id)
 
     return {
         "application_id": application_id,
