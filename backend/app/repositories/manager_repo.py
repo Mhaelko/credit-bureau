@@ -1,6 +1,7 @@
 from app.db import get_connection
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
+from app.repositories.log_repo import write_log
 from app.services.credit_calculator import (
     calculate_monthly_payment,
     generate_payment_schedule,
@@ -155,6 +156,9 @@ def create_manager_decision(application_id: int, data):
             (application_id,)
         )
         conn.commit()
+        write_log("status_change",
+                  f"Заявку #{application_id} відхилено менеджером. Коментар: {data.comment or '—'}",
+                  actor=f"Менеджер #{data.manager_id}", entity_id=application_id)
         return {"decision_id": decision_id, "new_status": 6}
 
     # 4. Розрахунок платежу
@@ -186,6 +190,11 @@ def create_manager_decision(application_id: int, data):
         (application_id,)
     )
     conn.commit()
+
+    write_log("status_change",
+              f"Заявку #{application_id} схвалено. Кредит #{credit_id}, сума {net_amount:.0f} грн, "
+              f"{term} міс., платіж {monthly_payment:.0f} грн/міс.",
+              actor=f"Менеджер #{data.manager_id}", entity_id=application_id)
 
     return {
         "decision_id": decision_id,

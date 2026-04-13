@@ -2,6 +2,7 @@ from app.db import get_connection
 from app.services.scoring import calculate_scoring, generate_recommendation
 from app.services.business_rules import check_rules
 from app.repositories.blacklist_repo import is_blacklisted
+from app.repositories.log_repo import write_log
 
 
 def create_application(data):
@@ -19,6 +20,9 @@ def create_application(data):
               data.term_months, data.purpose, data.down_payment_amount))
         application_id = cur.fetchone()[0]
         conn.commit()
+        write_log("application",
+                  f"Заявку #{application_id} автоматично відхилено — клієнт у чорному списку",
+                  actor=f"Клієнт #{data.customer_id}", entity_id=application_id)
         return {"application_id": application_id, "status": "auto_rejected", "reason": "blacklisted"}
 
     # Створюємо заявку
@@ -81,6 +85,15 @@ def create_application(data):
         (status, application_id)
     )
     conn.commit()
+
+    if status == 2:
+        write_log("application",
+                  f"Заявку #{application_id} на суму {data.amount_requested:.0f} грн автоматично відхилено (бізнес-правила / скоринг)",
+                  actor=f"Клієнт #{data.customer_id}", entity_id=application_id)
+    else:
+        write_log("application",
+                  f"Подано заявку #{application_id} на суму {data.amount_requested:.0f} грн, термін {data.term_months} міс.",
+                  actor=f"Клієнт #{data.customer_id}", entity_id=application_id)
 
     return {
         "application_id": application_id,
