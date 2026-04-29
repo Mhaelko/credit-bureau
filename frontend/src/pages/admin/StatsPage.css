@@ -120,10 +120,11 @@
   padding: 18px 20px;
   text-align: center;
 }
-.summary-card.total   { border-top: 3px solid #2E75B6; }
-.summary-card.amount  { border-top: 3px solid #7c3aed; }
-.summary-card.approved{ border-top: 3px solid #16a34a; }
-.summary-card.pending { border-top: 3px solid #d97706; }
+.summary-card.total    { border-top: 3px solid #2E75B6; }
+.summary-card.amount   { border-top: 3px solid #7c3aed; }
+.summary-card.approved { border-top: 3px solid #16a34a; }
+.summary-card.rejected { border-top: 3px solid #dc2626; }
+.summary-card.pending  { border-top: 3px solid #d97706; }
 .summary-value {
   font-size: 28px;
   font-weight: 700;
@@ -164,24 +165,32 @@
   border: 1px solid #e2e8f0;
   border-top-width: 3px;
   padding: 14px 16px;
+  /* grid: рядок 1 = назва фіксовані 36px, рядок 2 = число, рядок 3 = сума */
+  display: grid;
+  grid-template-rows: 36px auto auto;
+  gap: 6px 0;
 }
 .status-name {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  margin-bottom: 8px;
+  line-height: 1.4;
+  /* вміщає до 2 рядків при 11px × 1.4 = 15.4px × 2 = 30.8px < 36px */
+  overflow: hidden;
+  align-self: start;        /* текст від верхнього краю — всі назви на одному рівні */
 }
 .status-count {
   font-size: 30px;
   font-weight: 800;
   color: #1e293b;
   line-height: 1;
+  align-self: start;
 }
 .status-amount {
   font-size: 12px;
   color: #64748b;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 /* ── БАР-ЧАРТ ───────────────────────────────────────────────────────────── */
@@ -189,14 +198,14 @@
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 20px 16px 12px;
+  padding: 16px 16px 12px;
   margin-bottom: 28px;
-  min-height: 170px;
+  min-height: 180px;
 }
 .bar-chart {
   display: flex;
   align-items: flex-end;
-  gap: 4px;
+  gap: 6px;
   overflow-x: auto;
   padding-bottom: 4px;
 }
@@ -204,35 +213,34 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  min-width: 32px;
-  position: relative;
+  gap: 3px;
+  min-width: 44px;
+  flex-shrink: 0;
 }
-.bar-col:hover .bar-tooltip { display: block; }
-.bar-tooltip {
-  display: none;
-  position: absolute;
-  bottom: calc(100% + 4px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: #1e293b;
-  color: #fff;
-  font-size: 11px;
-  padding: 5px 8px;
-  border-radius: 6px;
-  white-space: nowrap;
-  z-index: 10;
-  text-align: center;
-  line-height: 1.4;
+/* кількість заявок над баром */
+.bar-count-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1;
 }
 .bar-fill {
-  width: 24px;
+  width: 28px;
   background: #2E75B6;
   border-radius: 4px 4px 0 0;
   transition: height 0.3s ease;
+  cursor: default;
 }
+.bar-col:hover .bar-fill { background: #1a5fa0; }
+/* дата під баром */
 .bar-label {
   font-size: 10px;
+  color: #64748b;
+  white-space: nowrap;
+}
+/* сума під датою — дрібно */
+.bar-amount-label {
+  font-size: 9px;
   color: #94a3b8;
   white-space: nowrap;
 }
@@ -256,24 +264,27 @@
 }
 .managers-table th {
   padding: 10px 16px;
-  text-align: left;
+  text-align: center;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #64748b;
 }
+.managers-table th:first-child { text-align: left; }
 .managers-table td {
   padding: 11px 16px;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
+  text-align: center;
 }
+.managers-table td:first-child { text-align: left; }
 .managers-table tbody tr:last-child td { border-bottom: none; }
 .managers-table tbody tr:hover { background: #f8fafc; }
 
 .mgr-name { font-weight: 600; color: #1e293b; display: block; }
 .mgr-login { font-size: 12px; color: #94a3b8; }
-.num { text-align: right; font-variant-numeric: tabular-nums; }
+.num { font-variant-numeric: tabular-nums; }
 .approved-num { color: #16a34a; font-weight: 600; }
 .rejected-num { color: #dc2626; font-weight: 600; }
 

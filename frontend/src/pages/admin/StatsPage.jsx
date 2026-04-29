@@ -3,14 +3,37 @@ import { getApplicationStats, getManagersForFilter } from "../../api/backend";
 import "./StatsPage.css";
 
 // ── статусна метадата ──────────────────────────────────────────────────────
+// статуси 2 і 6 об'єднуємо у "rejected" перед рендером
 const STATUS_META = {
-  1: { label: "Нова",            color: "#6c757d", bg: "#f8f9fa" },
-  2: { label: "Авто-відхилена",  color: "#dc3545", bg: "#fff5f5" },
-  3: { label: "На розгляді",     color: "#fd7e14", bg: "#fff8f0" },
-  4: { label: "Очікує",          color: "#0dcaf0", bg: "#f0fdff" },
-  5: { label: "Схвалена",        color: "#198754", bg: "#f0fff4" },
-  6: { label: "Відхилена",       color: "#dc3545", bg: "#fff5f5" },
+  1:         { label: "Нова",                                       color: "#6c757d", bg: "#f8f9fa" },
+  3:         { label: "На розгляді",                                color: "#fd7e14", bg: "#fff8f0" },
+  4:         { label: "Очікує",                                     color: "#0dcaf0", bg: "#f0fdff" },
+  5:         { label: "Схвалена",                                   color: "#198754", bg: "#f0fff4" },
+  rejected:  { label: "Відхилена (в т.ч. автоматично)",            color: "#dc3545", bg: "#fff5f5" },
 };
+
+// Об'єднує статуси 2 (авто) і 6 (вручну) в один рядок зі збереженням деталей
+function mergeRejected(list) {
+  let autoCount = 0, manualCount = 0, rejAmount = 0;
+  const result = [];
+  for (const s of list) {
+    if (s.status_id === 2) { autoCount   += s.count; rejAmount += s.total_amount; }
+    else if (s.status_id === 6) { manualCount += s.count; rejAmount += s.total_amount; }
+    else { result.push(s); }
+  }
+  const total = autoCount + manualCount;
+  if (total > 0) {
+    result.push({
+      status_id:    "rejected",
+      status_name:  "Відхилена",
+      count:        total,
+      total_amount: rejAmount,
+      manualCount,
+      autoCount,
+    });
+  }
+  return result;
+}
 
 const PERIODS = [
   { key: "day",   label: "За день"    },
@@ -27,7 +50,7 @@ function fmtMoney(n) {
   return Number(n).toLocaleString("uk-UA", { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + " ₴";
 }
 
-// ── простий бар-чарт на CSS ────────────────────────────────────────────────
+// ── бар-чарт зі статичними лейблами (без hover-тултіпів в overflow) ────────
 function BarChart({ data }) {
   if (!data || data.length === 0) return <p className="stats-empty">Немає даних за вибраний період</p>;
   const maxCount = Math.max(...data.map((d) => d.count), 1);
@@ -35,12 +58,15 @@ function BarChart({ data }) {
     <div className="bar-chart">
       {data.map((d) => (
         <div key={d.date} className="bar-col">
-          <div className="bar-tooltip">{d.count} заявок<br />{fmtMoney(d.amount)}</div>
+          {/* лейбл зверху — завжди видимий, не виходить за межі overflow */}
+          <span className="bar-count-label">{d.count}</span>
           <div
             className="bar-fill"
-            style={{ height: `${Math.max(4, (d.count / maxCount) * 120)}px` }}
+            style={{ height: `${Math.max(6, (d.count / maxCount) * 120)}px` }}
+            title={`${d.count} заявок · ${fmtMoney(d.amount)}`}
           />
           <div className="bar-label">{d.date.slice(5)}</div>
+          <div className="bar-amount-label">{fmtMoney(d.amount)}</div>
         </div>
       ))}
     </div>
@@ -80,7 +106,7 @@ export default function StatsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const byStatus = stats?.by_status || [];
+  const byStatus = mergeRejected(stats?.by_status || []);
 
   return (
     <div className="stats-page">
@@ -179,6 +205,14 @@ export default function StatsPage() {
             <div className="summary-label">Схвалено</div>
           </div>
         )}
+        {byStatus.find((s) => s.status_id === "rejected") && (
+          <div className="summary-card rejected">
+            <div className="summary-value">
+              {loading ? "…" : fmt(byStatus.find((s) => s.status_id === "rejected")?.count ?? 0)}
+            </div>
+            <div className="summary-label">Відхилено</div>
+          </div>
+        )}
         {byStatus.find((s) => s.status_id === 3) && (
           <div className="summary-card pending">
             <div className="summary-value">
@@ -197,10 +231,15 @@ export default function StatsPage() {
         <div className="status-grid">
           {byStatus.map((s) => {
             const meta = STATUS_META[s.status_id] || { label: s.status_name, color: "#555", bg: "#f5f5f5" };
+            const isRejected = s.status_id === "rejected";
             return (
               <div key={s.status_id} className="status-card" style={{ borderTopColor: meta.color, background: meta.bg }}>
                 <div className="status-name" style={{ color: meta.color }}>{meta.label}</div>
-                <div className="status-count">{fmt(s.count)}</div>
+                <div className="status-count">
+                  {isRejected
+                    ? `${fmt(s.manualCount)}(${fmt(s.autoCount)})`
+                    : fmt(s.count)}
+                </div>
                 <div className="status-amount">{fmtMoney(s.total_amount)}</div>
               </div>
             );
