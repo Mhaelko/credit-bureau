@@ -308,7 +308,10 @@ export default function ApplicationDetailsPage() {
                             Сплатити штраф
                           </button>
                         )}
-                        {p.is_paid && !p.penalty_amount && <span className="td-dash">—</span>}
+                        {/* якщо нічого не показуємо — дефіс */}
+                        {p.is_paid && (p.penalty_amount <= 0 || p.penalty_paid) && (
+                          <span className="td-dash">—</span>
+                        )}
                       </td>
                     )}
 

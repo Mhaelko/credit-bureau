@@ -110,12 +110,13 @@ export default function PaymentModal({ amount, label = "Сплатити", onCon
                 <div className="pm-field">
                   <label>CVV</label>
                   <input
-                    placeholder="•••"
+                    placeholder="000"
                     type="password"
                     value={cvv}
                     onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 3))}
                     maxLength={3}
                     inputMode="numeric"
+                    autoComplete="off"
                   />
                 </div>
               </div>
